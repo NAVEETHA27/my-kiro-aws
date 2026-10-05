@@ -51,7 +51,10 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps): J
   }
 
   return (
-    <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}`}>
+    <li
+      className={`todo-item${todo.completed ? ' todo-item--completed' : ''}`}
+      data-priority={todo.priority}
+    >
       <div className="todo-item__main">
         <button
           type="button"

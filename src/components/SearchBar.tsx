@@ -7,6 +7,7 @@ interface SearchBarProps {
 export function SearchBar({ query, onChange, onClear }: SearchBarProps): JSX.Element {
   return (
     <div className="search-bar">
+      <span className="search-bar__icon" aria-hidden="true">🔍</span>
       <label htmlFor="search-input" className="search-bar__label sr-only">
         Search todos
       </label>
