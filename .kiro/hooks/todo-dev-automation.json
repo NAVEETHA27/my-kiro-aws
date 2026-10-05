@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Todo TypeScript Validation",
+      "description": "When any TypeScript or TSX file is edited in the todo project, run the test suite and report any failures. This catches type errors and broken tests immediately while coding.",
+      "trigger": "FileEdited",
+      "matcher": "src/**/*.{ts,tsx}",
+      "action": {
+        "type": "agent",
+        "prompt": "A TypeScript or TSX source file was just edited in the Kiro Todo List project. Please:\n1. Run `npx vitest --run` from the workspace root\n2. If all tests pass, report success with a brief summary of tests run\n3. If any tests fail, identify the failing test names and the error messages, and suggest what may have caused the failure based on the change\n\nDo NOT auto-fix the failures — report them clearly so the developer can decide what to do."
+      }
+    }
+  ]
+}
