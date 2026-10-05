@@ -100,39 +100,101 @@ The properties were identified during the design phase (not the testing phase) b
 
 ---
 
-## 6. MCP (Model Context Protocol)
+## 6. Model Context Protocol (MCP)
 
-**Files**: `mcp/todo-server.js`, `mcp/README.md`, `mcp/todos.json`
+### What is MCP?
 
-**The MCP server exposes 4 tools:**
+The [Model Context Protocol](https://modelcontextprotocol.io/) is an open standard that lets AI assistants (like Kiro) call structured tools provided by external servers. Instead of the AI guessing about your data, it can call a real tool and get a real answer. Tools are defined with JSON schemas so the AI knows exactly what parameters to pass and what format the response will be in.
 
-| Tool | Description |
-|---|---|
-| `list_todos` | Return all todos, with optional `all`/`pending`/`completed` filter |
-| `get_todo` | Retrieve a single todo by UUID |
-| `search_todos` | Case-insensitive substring search on title and description |
-| `get_stats` | Summary: total, pending, completed, overdue, priority breakdown |
+### Workspace MCP Configuration
 
-**Transport**: stdio (standard Kiro MCP configuration)  
-**Tested**: All 3 MCP protocol methods (`initialize`, `tools/list`, `tools/call`) verified with `echo | node` tests.
+**Location**: `.kiro/settings/mcp.json` (workspace/project level — tracked in Git)
 
-**How the data bridge works:**  
-The browser application stores todos in `localStorage`. The MCP server reads from `mcp/todos.json`. To sync, the user exports the localStorage value from browser DevTools and pastes it into `todos.json`. This keeps the architecture simple and avoids any backend requirement.
+This file is the **workspace-level** MCP configuration for Kiro. It is separate from any user-level config and travels with the repository, so every developer who clones this repo gets the same MCP servers automatically registered.
 
-**To register the MCP server in Kiro:**
 ```json
 {
   "mcpServers": {
     "todo-list": {
       "command": "node",
       "args": ["mcp/todo-server.js"],
-      "cwd": "${workspaceFolder}"
+      "disabled": false,
+      "autoApprove": ["list_todos", "get_stats", "search_todos", "get_todo"]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }
 ```
 
-> **Manual step required**: Open Kiro's MCP configuration panel and add the server config above.
+### MCP Servers Configured
+
+#### 1. `todo-list` — Custom Todo MCP Server
+
+**Files**: `mcp/todo-server.js`, `mcp/README.md`, `mcp/todos.json`  
+**Transport**: stdio  
+**Command**: `node mcp/todo-server.js`  
+**Requires**: Node.js (already required by this project — no extra install)
+
+This is a custom MCP server built specifically for the Kiro Todo List. It exposes 4 tools:
+
+| Tool | Description |
+|---|---|
+| `list_todos` | Return all todos, optionally filtered by `all` / `pending` / `completed` |
+| `get_todo` | Retrieve a single todo by UUID |
+| `search_todos` | Case-insensitive substring search on title and description |
+| `get_stats` | Summary: total, pending, completed, overdue, priority breakdown |
+
+**Verified**: All MCP protocol methods (`initialize`, `tools/list`, `tools/call`) tested with live stdio calls:
+
+```bash
+# Returns: {"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"todo-mcp-server","version":"1.0.0"}}
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | node mcp/todo-server.js
+
+# Returns: 4 tools with full inputSchema definitions
+echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | node mcp/todo-server.js
+
+# Returns: {"total":0,"pending":0,"completed":0,"overdue":0,"byPriority":{...}}
+echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_stats","arguments":{}}}' | node mcp/todo-server.js
+```
+
+**How the data bridge works:**  
+The browser app stores todos in `localStorage`. The MCP server reads from `mcp/todos.json`. To sync: open browser DevTools → Application → Local Storage → copy the `kiro-todos` value → paste into `mcp/todos.json`. The AI assistant can then call `list_todos` and `get_stats` to inspect real todo data.
+
+#### 2. `fetch` — Official MCP Fetch Server
+
+**Command**: `uvx mcp-server-fetch`  
+**Transport**: stdio  
+**Requires**: `uvx` (uv package manager — installed at `uvx 0.12.12`)
+
+This is an official MCP server from the [MCP repository](https://github.com/modelcontextprotocol/servers). It allows Kiro to fetch content from URLs — useful for checking documentation, verifying library APIs, or fetching external resources during development.
+
+**Why included**: Demonstrates that the workspace MCP config can register both project-specific and general-purpose servers. The `uvx` runner downloads and runs the server without any manual pip install.
+
+### How Kiro Connects to MCP Servers
+
+1. Kiro reads `.kiro/settings/mcp.json` when opening this workspace
+2. It registers each enabled server (`"disabled": false`)
+3. Each server starts on demand when a tool call is needed (stdio process spawned)
+4. Tools with names listed in `autoApprove` run without prompting for confirmation
+
+### How to Verify
+
+1. Open Kiro's **MCP Server panel** (sidebar → Kiro features → MCP Servers)
+2. Both `todo-list` and `fetch` should appear as workspace-level servers
+3. Click the reconnect icon if a server shows as disconnected
+4. Ask Kiro: *"Call the get_stats tool on the todo-list MCP server"* — it should return live JSON
+
+### How This Todo Project Benefits from MCP
+
+- An AI assistant can call `get_stats` to instantly know how many todos are pending/completed/overdue without reading any source code
+- `search_todos` lets the AI find specific todos by keyword when helping the user debug or review
+- `list_todos` with `filter: "pending"` gives the AI a focused view of what still needs doing
+- The pattern demonstrates how any localStorage-backed app can expose its data to AI tooling via a thin MCP bridge, with no backend required
 
 ---
 
@@ -163,7 +225,7 @@ The agent file contains a 20-point checklist covering functionality, validation,
 3. **Hooks**: Built a `FileEdited` hook that automatically runs the test suite whenever a TypeScript source file is saved.
 4. **Property-based testing**: Verified 11 universal correctness properties using fast-check, each running 100 iterations with randomly generated todos.
 5. **Powers**: Created the `todo-assistant` power with POWER.md and a usage guide for development-time AI assistance.
-6. **MCP**: Built a working stdio MCP server with 4 tools (list, get, search, stats) that an AI can call to inspect todo data.
+6. **MCP**: Built a working stdio MCP server with 4 tools (list, get, search, stats) registered in `.kiro/settings/mcp.json` at workspace level alongside the official `mcp-server-fetch` server.
 7. **Custom agents**: Defined a `Todo QA Agent` with a structured 20-point checklist for reviewing the entire codebase against the spec.
 
 ---
