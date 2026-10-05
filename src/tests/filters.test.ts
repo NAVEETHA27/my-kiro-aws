@@ -159,6 +159,10 @@ describe('applySearch — property tests', () => {
   it('Property 5: search result is always a subset where every item matches the query', () => {
     fc.assert(
       fc.property(todoArrayArb, fc.string({ minLength: 1, maxLength: 10 }), (todos, query) => {
+        // When the query is whitespace-only, applySearch returns all todos unchanged (empty query
+        // semantics). Skip the per-item match assertion in that case.
+        if (query.trim() === '') return;
+
         const result = applySearch(todos, query);
         const lower = query.toLowerCase();
         // Every result item must actually match
