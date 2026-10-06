@@ -150,12 +150,13 @@ body {
   top: -30px; right: -30px;
 }
 
-/* Inline row: icon + text side by side */
+/* Inline row: icon + text side by side, centered */
 .app__header-inner {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
 }
 
