@@ -25,9 +25,11 @@ export function TodoApp(): JSX.Element {
       <div className="app">
         <header className="app__header">
           <div className="app__header-inner">
-            <span className="app__logo" aria-hidden="true">✅</span>
-            <h1 className="app__title">Kiro Todo List</h1>
-            <p className="app__subtitle">Stay organized, stay productive.</p>
+            <span className="app__logo" aria-hidden="true">⚡</span>
+            <div className="app__header-text">
+              <h1 className="app__title">TaskFlow</h1>
+              <p className="app__subtitle">Stay organized, stay productive.</p>
+            </div>
           </div>
         </header>
 
