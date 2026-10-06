@@ -68,20 +68,17 @@ body {
   line-height: 1.6;
   min-height: 100vh;
 
-  /* Deep space background: layered radial gradients + star-like noise */
+  /* SVG space background image */
   background-image:
-    /* top-left nebula glow */
-    radial-gradient(ellipse 80% 50% at 10% 0%,   rgba(37,99,235,0.25)  0%, transparent 60%),
-    /* top-right cyan glow */
-    radial-gradient(ellipse 60% 40% at 90% 5%,   rgba(6,182,212,0.18)  0%, transparent 55%),
-    /* center deep blue */
-    radial-gradient(ellipse 100% 60% at 50% 50%,  rgba(17,24,39,0.95)   0%, transparent 80%),
-    /* bottom violet */
-    radial-gradient(ellipse 70% 40% at 20% 100%, rgba(139,92,246,0.15)  0%, transparent 60%),
-    /* star grid dots */
-    radial-gradient(circle, rgba(148,163,184,0.18) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+    /* blue nebula overlay on top of image */
+    radial-gradient(ellipse 70% 40% at 10% 0%,  rgba(37,99,235,0.18)  0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 90% 5%,  rgba(6,182,212,0.12)  0%, transparent 50%),
+    radial-gradient(ellipse 60% 35% at 20% 100%,rgba(139,92,246,0.12) 0%, transparent 55%),
+    url('/bg.svg');
+  background-size: 100% 100%, 100% 100%, 100% 100%, cover;
+  background-position: center;
   background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Screen-reader only */
